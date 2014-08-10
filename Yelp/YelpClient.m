@@ -7,6 +7,7 @@
 //
 
 #import "YelpClient.h"
+#import <CoreLocation/CoreLocation.h>
 
 @implementation YelpClient
 
@@ -23,9 +24,26 @@
 - (AFHTTPRequestOperation *)searchWithTerm:(NSString *)term success:(void (^)(AFHTTPRequestOperation *operation, id response))success failure:(void (^)(AFHTTPRequestOperation *operation, NSError *error))failure {
     
     // For additional parameters, see http://www.yelp.com/developers/documentation/v2/search_api
-    NSDictionary *parameters = @{@"term": term, @"location" : @"San Francisco"};
+    NSDictionary *parameters = @{@"term": term, @"location" : @"Seattle", @"sort" : @"0",
+                                 @"radius_filter" : @20000, @"deals_filter":@YES,
+                                 @"category_filter" : @"vegan,mexican,vegetarian,indpak"
+                                 };
     
     return [self GET:@"search" parameters:parameters success:success failure:failure];
+}
+
+- (AFHTTPRequestOperation *)searchWithTerm:(NSString *)term searchFilters:(NSDictionary *)filters
+                            searchLocation:(CLLocation *)location success:(void (^)(AFHTTPRequestOperation * operation, id response))success
+                                   failure:(void (^)(AFHTTPRequestOperation *operation, NSError *error))failure
+{
+    NSMutableDictionary *parameters = [[NSMutableDictionary alloc] init];
+    [parameters setObject:term forKey:@"term"];
+    [parameters addEntriesFromDictionary:filters];
+    [parameters setObject:[NSString stringWithFormat:@"%f,%f",
+                           location.coordinate.latitude,
+                           location.coordinate.longitude] forKey:@"ll"];
+    
+    return [ self GET:@"search" parameters:parameters success:success failure:failure];
 }
 
 @end
